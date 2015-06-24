@@ -113,3 +113,19 @@ def align():
 			alipy.align.irafalign(id.ukn.filepath, id.uknmatchstars, id.refmatchstars,verbose=False,
 				shape=outputshape, makepng=False, outdir="./")
 	return
+
+def combineDithers(color):
+	'''grab the aligned images and sum them up into one'''
+	aligned=sorted(glob.glob('sky-flatten-binir*_gregister.fits'))
+	date=aligned[0][17:23]
+
+	#use iraf imcombine to sum them all up
+	iraf.imcombine(','.join(aligned), date+'.'+color+'.s-f-a-c',
+		headers="", bpmasks="", rejmasks="", nrejmasks="", expmasks="",
+		sigmas="", imcmb="$I", logfile="STDOUT", combine="sum", reject="none",
+		project="no", outtype="real", outlimits="", offsets="none", masktype="none",
+		maskvalue="0", blank=0., scale="none", zero="none", weight="none", statsec="",
+		expname="", lthreshold="INDEF", hthreshold="INDEF", nlow=1, nhigh=2, nkeep=1,
+		mclip="yes", lsigma=3., hsigma=3., rdnoise="0.", gain="1.", snoise="0.",
+		sigscale=0.1, pclip=-0.5, grow=0.)
+	return
