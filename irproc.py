@@ -2,13 +2,34 @@ import glob, sys
 import numpy as np 
 from pyraf import iraf
 import pandas as pd
-#set append the python path so it can use alipy and stuff
+#append the python path so it can use alipy and stuff
 sys.path.append('/home/ih64/python_modules/')
 import alipy
 #do this stuff down here so IRAF doesn't save any parameters, and to make important tasks avaliable 
 iraf.prcacheOff()
 iraf.imred()
 iraf.ccdred()
+
+def joinStrList(fileList, scratch=False):
+	'''
+	given a list that has paths to data,
+	join the file paths in a long string
+	where each element is seperated by a comma.
+	this long string can then be passed as an image list 
+	to python tasks
+	if scratch is set to True, concatinate the string 'scratch/'
+	to each element before joining them. the scratch directory
+	is where we will put temporary output fits files for the reduction
+	'''
+	if scratch==True:
+		longString=','.join(['scratch/'+i for i in fileList])
+		return longString
+	elif scratch==False:
+		longString=','.join(fileList)
+		return longString
+	else:
+		print 'set scratch equal to either True or False'
+		return
 
 def makeSkyFlat(dfView):
 	'''
@@ -22,10 +43,12 @@ def makeSkyFlat(dfView):
 	#they should all have the same date, just grab the first one
 	date=str(dfView.Date.values[0])
 	#use iraf imcombine to create the median skyflat
+	inputFiles=joinStrList(images)
+	outputSkyFlat='scratch/'+date+'sky'
 	#','.join(images) concatanates all the images together with a comma between them
 	#if we feed it as one string to iraf, it will be recognized as a list of files
 	#the produced skyflat will be YYMMDDsky.fits in the current working directory
-	iraf.imcombine(','.join(images), date+'sky', headers="", bpmasks="", rejmasks="",
+	iraf.imcombine(inputFiles, outputSkyFlat, headers="", bpmasks="", rejmasks="",
 		nrejmasks="", expmasks="", sigmas="", imcmb="$I", logfile="STDOUT", combine="median", 
 		reject="none", project="no", outtype="real", outlimits="", offsets="none", masktype="none",
 		maskvalue="0", blank=0., scale="none", zero="none", weight="none", statsec="",
@@ -42,9 +65,13 @@ def skySub(dfView):
 	the names of the sky-subtracted fits images have 'sky' infront of them
 	'''
 	images=dfView.file.values.tolist()
-	skySubImages=['sky'+i[5:] for i in images]
+	skySubImages=['s-'+i[5:] for i in images]
 	date=str(dfView.Date.values[0])
-	iraf.imarith (','.join(images), "-", date+'sky.fits', ','.join(skySubImages), title="sky-subtracted",
+
+	inputFiles=joinStrList(images)
+	skyFlat='scratch/'+date+'sky.fits'
+	outputSkySub=joinStrList(skySubImages, scratch=True)
+	iraf.imarith (inputFiles, "-", skyFlat, outputSkySub, title="sky-subtracted",
 		divzero=0., hparams="", pixtype="", calctype="", verbose="yes", noact="no")
 	return
 
@@ -68,10 +95,13 @@ def flatten(flatFile):
 	#just set them equal to 1 (???)
 	iraf.imreplace(flatFile, 1., imaginary=0., lower="INDEF", upper=1.0, radius=0.)
 	#get a list of the sky subtracted images
-	skyims=glob.glob('skybinir*fits')
-	outputIms=['sky-flatten-'+i[3:] for i in skyims]
+	skyims=glob.glob('scratch/s-binir*fits')
+	flatIms=['s-f-'+i[10:] for i in skyims]
+
+	inputFiles=joinStrList(skyims)
+	outputFiles=joinStrList(flatIms, scratch=True)
 	#now flatfield the sky subtracted images
-	iraf.ccdproc(images=','.join(skyims), output=','.join(outputIms), 
+	iraf.ccdproc(images=inputFiles, output=outputFiles, 
 		ccdtype="", max_cache=0, noproc="no", fixpix="no", overscan="no",
 		trim="no", zerocor="no", darkcor="no", flatcor="yes", illumcor="no", fringecor="no",
 		readcor="no", scancor="no", readaxis="line", fixfile="", biassec="", trimsec="",
@@ -82,7 +112,7 @@ def flatten(flatFile):
 
 def align():
 	'''align the flatten images'''
-	images_to_align =sorted(glob.glob("sky-flatten-*fits"))
+	images_to_align =sorted(glob.glob("scratch/s-f-*fits"))
 	ref_image = images_to_align[0]
 
 	#everything below here i copied from the alipy demo http://obswww.unige.ch/~tewes/alipy/tutorial.html
@@ -111,16 +141,18 @@ def align():
 		if id.ok == True:
 			# Variant 2, using geomap/gregister, correcting also for distortions :
 			alipy.align.irafalign(id.ukn.filepath, id.uknmatchstars, id.refmatchstars,verbose=False,
-				shape=outputshape, makepng=False, outdir="./")
+				shape=outputshape, makepng=False, outdir="./scratch")
 	return
 
 def combineDithers(color):
 	'''grab the aligned images and sum them up into one'''
-	aligned=sorted(glob.glob('sky-flatten-binir*_gregister.fits'))
+	aligned=sorted(glob.glob('scratch/s-f-*_gregister.fits'))
 	date=aligned[0][17:23]
 
+	inputFiles=joinStrList(aligned)
+	outputFile='reduced/'+date+'.'+color+'.4U1543.s-f-a-c'
 	#use iraf imcombine to sum them all up
-	iraf.imcombine(','.join(aligned), date+'.'+color+'.s-f-a-c',
+	iraf.imcombine(inputFiles, outputFile,
 		headers="", bpmasks="", rejmasks="", nrejmasks="", expmasks="",
 		sigmas="", imcmb="$I", logfile="STDOUT", combine="sum", reject="none",
 		project="no", outtype="real", outlimits="", offsets="none", masktype="none",
