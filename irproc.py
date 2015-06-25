@@ -42,12 +42,10 @@ def makeSkyFlat(dfView):
 	images=dfView.file.values.tolist()
 	#they should all have the same date, just grab the first one
 	date=str(dfView.Date.values[0])
-	#use iraf imcombine to create the median skyflat
+	#organize the images and output file name in iraf-friendly ways
 	inputFiles=joinStrList(images)
 	outputSkyFlat='scratch/'+date+'sky'
-	#','.join(images) concatanates all the images together with a comma between them
-	#if we feed it as one string to iraf, it will be recognized as a list of files
-	#the produced skyflat will be YYMMDDsky.fits in the current working directory
+	#use iraf imcombine to create the median skyflat
 	iraf.imcombine(inputFiles, outputSkyFlat, headers="", bpmasks="", rejmasks="",
 		nrejmasks="", expmasks="", sigmas="", imcmb="$I", logfile="STDOUT", combine="median", 
 		reject="none", project="no", outtype="real", outlimits="", offsets="none", masktype="none",
@@ -64,10 +62,14 @@ def skySub(dfView):
 	the output will be one sky-subtracted image for each image in the dfView
 	the names of the sky-subtracted fits images have 'sky' infront of them
 	'''
+	#grab the paths to images to be sky-subtracted
 	images=dfView.file.values.tolist()
+	#adding a 's' infront of each file name, save to a seperate list
 	skySubImages=['s-'+i[5:] for i in images]
+	#grab the YYMMDD observation date from this view
 	date=str(dfView.Date.values[0])
 
+	#organize the input, skyflat, and output in iraf-friendly ways
 	inputFiles=joinStrList(images)
 	skyFlat='scratch/'+date+'sky.fits'
 	outputSkySub=joinStrList(skySubImages, scratch=True)
@@ -81,7 +83,7 @@ def nearestFlat(dfView,color):
 	identify the jflat that was observed closest in time
 	return a string that gives the path to this flat
 	'''
-	#find the median observation time
+	#find the median observation time of the dfView
 	medTime=dfView.JulianDate.median()
 	#load up the flat df
 	flatDF=pd.read_pickle(color.upper()+'flatList.pkl')
@@ -92,12 +94,12 @@ def nearestFlat(dfView,color):
 def flatten(flatFile):
 	'''grab any sky-subtracted images, and flatten them using flatFile'''
 	#first we have to clean up the flat, and get rid of any negative numbers or zeros
-	#just set them equal to 1 (???)
+	#just set them equal to 1 (??? why do we do this ???)
 	iraf.imreplace(flatFile, 1., imaginary=0., lower="INDEF", upper=1.0, radius=0.)
 	#get a list of the sky subtracted images
 	skyims=glob.glob('scratch/s-binir*fits')
 	flatIms=['s-f-'+i[10:] for i in skyims]
-
+	#organize input and output in iraf-friendly ways
 	inputFiles=joinStrList(skyims)
 	outputFiles=joinStrList(flatIms, scratch=True)
 	#now flatfield the sky subtracted images
@@ -112,7 +114,9 @@ def flatten(flatFile):
 
 def align():
 	'''align the flatten images'''
+	#grab the paths to the sky subtracted and flattened images
 	images_to_align =sorted(glob.glob("scratch/s-f-*fits"))
+	#pick the first image in this view as the reference image
 	ref_image = images_to_align[0]
 
 	#everything below here i copied from the alipy demo http://obswww.unige.ch/~tewes/alipy/tutorial.html
@@ -146,9 +150,12 @@ def align():
 
 def combineDithers(color):
 	'''grab the aligned images and sum them up into one'''
+	#grab the paths to the sky subtracted flattened aligned images
 	aligned=sorted(glob.glob('scratch/s-f-*_gregister.fits'))
+	#pick out the YYMMDD date from the file names
 	date=aligned[0][17:23]
 
+	#organize input and output in iraf-friendly ways
 	inputFiles=joinStrList(aligned)
 	outputFile='reduced/'+date+'.'+color+'.4U1543.s-f-a-c'
 	#use iraf imcombine to sum them all up
