@@ -1,4 +1,4 @@
-import glob, sys
+import glob, sys, os
 import numpy as np 
 from pyraf import iraf
 import pandas as pd
@@ -9,6 +9,39 @@ import alipy
 iraf.prcacheOff()
 iraf.imred()
 iraf.ccdred()
+
+def sameDate(df):
+	size=len(df)
+	i=0
+	j=i+1
+	while j < size:
+		dateI=df.Date.iloc[i]
+		dateJ=df.Date.iloc[j]
+		if dateI==dateJ:
+			j+=1
+		else:
+			dfView = df.iloc[i:j]
+			makeSkyFlat(dfView)
+			skySub(dfView)
+			flatFile=nearestFlat(dfView,'J')
+			flatten(flatFile)
+			align()
+			combineDithers('J')
+			cleanup('scratch/')
+			i=j
+			j+=1
+
+	dfView = df.iloc[i:j]
+	makeSkyFlat(dfView)
+	skySub(dfView)
+	flatFile=nearestFlat(dfView,'J')
+	flatten(flatFile)
+	align()
+	combineDithers('J')
+	cleanup('scratch/')
+	return
+
+
 
 def joinStrList(fileList, scratch=False):
 	'''
@@ -167,4 +200,12 @@ def combineDithers(color):
 		expname="", lthreshold="INDEF", hthreshold="INDEF", nlow=1, nhigh=2, nkeep=1,
 		mclip="yes", lsigma=3., hsigma=3., rdnoise="0.", gain="1.", snoise="0.",
 		sigscale=0.1, pclip=-0.5, grow=0.)
+	return
+
+def cleanup(path):
+	'''delete everything under the path directory'''
+	scratchFiles=glob.glob(path+'*')
+	for f in scratchFiles:
+		os.remove(f)
+	os.remove('/home/ih64/Desktop/4U1543/logfile')
 	return
