@@ -2,3 +2,5 @@
 *.fits
 *.*~
 logfile
+*.mag*
+*.jpg

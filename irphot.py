@@ -1,6 +1,7 @@
 import glob, sys, os
 import numpy as np 
 from pyraf import iraf
+from astropy.io import ascii
 import pandas as pd
 #append the python path so it can use alipy and stuff
 sys.path.append('/home/ih64/python_modules/')
@@ -9,6 +10,72 @@ import alipy
 iraf.prcacheOff()
 iraf.imred()
 iraf.ccdred()
+#centerpars
+centerpars=iraf.centerpars.getParDict()
+centerpars['calgorithm'].set('centroid')
+centerpars['cbox'].set('10')
+centerpars['cthreshold'].set('0')
+centerpars['minsnratio'].set('1')
+centerpars['cmaxiter'].set('10')
+centerpars['maxshift'].set('5')
+centerpars['clean'].set('no')
+centerpars['rclean'].set('1')
+centerpars['rclip'].set('2')
+centerpars['kclean'].set('3')
+centerpars['mkcenter'].set('yes')
+
+#datapars
+datapars=iraf.datapars.getParDict()
+datapars['scale'].set('1')
+datapars['fwhmpsf'].set('5')
+datapars['emission'].set('yes')
+datapars['sigma'].set('INDEF')
+datapars['datamin'].set('-500')
+datapars['datamax'].set('30000')
+datapars['noise'].set('poisson')
+datapars['readnoise'].set('6.5')
+datapars['epadu'].set('2.3')
+datapars['exposure'].set('EXPTIME')
+datapars['airmass'].set('SECZ')
+datapars['filter'].set('CCDFLTID')
+datapars['obstime'].set('JD')
+
+#findpars
+findpars=iraf.findpars.getParDict()
+findpars['threshold'].set('4.0')
+findpars['nsigma'].set('1.5')
+findpars['ratio'].set('1')
+findpars['theta'].set('0')
+findpars['sharplo'].set('0.2')
+findpars['sharphi'].set('1.')
+findpars['roundlo'].set('-1.')
+findpars['roundhi'].set('1.')
+findpars['mkdetections'].set('no')
+
+#skypars
+skypars=iraf.fitskypars.getParDict()
+skypars['salgorithm'].set('mode')
+skypars['annulus'].set('25.')
+skypars['dannulus'].set('7.')
+skypars['skyvalue'].set('0.')
+skypars['smaxiter'].set('10')
+skypars['sloclip'].set('0.')
+skypars['shiclip'].set('0.')
+skypars['snreject'].set('50')
+skypars['sloreject'].set('3.')
+skypars['shireject'].set('3.')
+skypars['khist'].set('3.')
+skypars['binsize'].set('0.1')
+skypars['smooth'].set('no')
+skypars['rgrow'].set('0.')
+skypars['mksky'].set('no')
+
+#photpars
+photpars=iraf.photpars.getParDict()
+photpars['weighting'].set('constant')
+photpars['apertures'].set('9')
+photpars['zmag'].set('25.')
+photpars['mkapert'].set('no')
 
 def alignReduced(color):
 	'''align the flatten images'''
@@ -48,3 +115,64 @@ def alignReduced(color):
 			alipy.align.irafalign(id.ukn.filepath, id.uknmatchstars, id.refmatchstars,verbose=False,
 				shape=outputshape, makepng=False, outdir="./reduced/"+color+"align/")
 	return
+
+def photometry(color):
+	#grab the aligned images
+	images=sorted(glob.glob('reduced/'+color+'align/*fits'))
+
+	for i in images:
+		iraf.phot(i, coords='reduced/'+color+'align/coords.lis',
+			fwhmpsf=3,datamin=-500.,datamax=10000.,readnoise=20.,epadu=7.2,
+			  exposur="EXPTIME",airmass="SECZ",obstime="JD",filter="IRFLTID",annulus=15,
+		  	  dannulu=7, apertur="9",verify='no',output=i+".MC")
+	return
+
+
+
+#function reads open photometry files and looks up the quantities we're interested in, like magnitude, error, jd, airmass
+#then takes this data and puts it in a pandas data frame
+def magtodf(pathToMagFiles):
+    magfiles=glob.glob(pathToMagFiles)
+    
+    #the keys for this dictionary will be the columns for the data frame.
+    #each key starts off with an empy python list as its value.
+    #we will read each output file one by one and append its data to the appropriate lists
+    #so that each element in the list for a key will represents a row in that column 
+    rowdict={'fname':[],'date':[],'juliandate':[],'airmass':[],
+    	'mag1':[],'mag2':[],'mag3':[],'mag4':[],'mag5':[], 'mag6':[],
+    	'mag7':[],'merr1':[], 'merr2':[], 'merr3':[], 'merr4':[], 'merr5':[], 'merr6':[], 'merr7':[]}
+
+    for i in magfiles:
+		#use the handy astropy ascii object to read photometry files
+		photdata=ascii.read(i)
+		#the astropy.ascii automatically masks any bad data values. I'd prefer to keep the bad values as np.nans
+		if np.ma.is_masked(photdata['MAG']):
+			photdata['MAG'][photdata['MAG'].mask]=np.nan
+		if np.ma.is_masked(photdata['MERR']):
+			photdata['MERR'][photdata['MERR'].mask]=np.nan
+		#for append the data from this photometry file to the dictionary
+		rowdict['fname'].append(photdata['IMAGE'][0])
+		rowdict['date'].append(float(photdata['IMAGE'][0][0:6]))
+		rowdict['juliandate'].append(photdata['OTIME'][0])
+		rowdict['airmass'].append(photdata['XAIRMASS'][0])
+		rowdict['mag1'].append(photdata['MAG'][0])
+		rowdict['mag2'].append(photdata['MAG'][1])
+		rowdict['mag3'].append(photdata['MAG'][2])
+		rowdict['mag4'].append(photdata['MAG'][3])
+		rowdict['mag5'].append(photdata['MAG'][4])
+		rowdict['mag6'].append(photdata['MAG'][5])
+		rowdict['mag7'].append(photdata['MAG'][6])
+		rowdict['merr1'].append(photdata['MERR'][0])
+		rowdict['merr2'].append(photdata['MERR'][1])
+		rowdict['merr3'].append(photdata['MERR'][2])
+		rowdict['merr4'].append(photdata['MERR'][3])
+		rowdict['merr5'].append(photdata['MERR'][4])
+		rowdict['merr6'].append(photdata['MERR'][5])
+		rowdict['merr7'].append(photdata['MERR'][6])
+    
+    #create a pandas dataframe out of the dictionary
+    df=pd.DataFrame(rowdict)
+    #change the data type of the date column to int. cant translate from string to int above for some reason
+    df['date']=df['date'].astype(int)
+    return df
+
