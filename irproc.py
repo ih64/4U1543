@@ -10,7 +10,7 @@ iraf.prcacheOff()
 iraf.imred()
 iraf.ccdred()
 
-def sameDate(df):
+def sameDate(df,color):
 	size=len(df)
 	i=0
 	j=i+1
@@ -23,10 +23,10 @@ def sameDate(df):
 			dfView = df.iloc[i:j]
 			makeSkyFlat(dfView)
 			skySub(dfView)
-			flatFile=nearestFlat(dfView,'J')
+			flatFile=nearestFlat(dfView,color)
 			flatten(flatFile)
 			align()
-			combineDithers('J')
+			combineDithers(color)
 			cleanup('scratch/')
 			i=j
 			j+=1
@@ -34,10 +34,10 @@ def sameDate(df):
 	dfView = df.iloc[i:j]
 	makeSkyFlat(dfView)
 	skySub(dfView)
-	flatFile=nearestFlat(dfView,'J')
+	flatFile=nearestFlat(dfView,color)
 	flatten(flatFile)
 	align()
-	combineDithers('J')
+	combineDithers(color)
 	cleanup('scratch/')
 	return
 
@@ -106,7 +106,7 @@ def skySub(dfView):
 	inputFiles=joinStrList(images)
 	skyFlat='scratch/'+date+'sky.fits'
 	outputSkySub=joinStrList(skySubImages, scratch=True)
-	iraf.imarith (inputFiles, "-", skyFlat, outputSkySub, title="sky-subtracted",
+	iraf.imarith (inputFiles, "-", skyFlat, outputSkySub, 
 		divzero=0., hparams="", pixtype="", calctype="", verbose="yes", noact="no")
 	return
 
