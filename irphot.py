@@ -77,10 +77,12 @@ photpars['apertures'].set('9')
 photpars['zmag'].set('25.')
 photpars['mkapert'].set('no')
 
-def alignReduced(color):
+def alignReduced(color,images_to_align):
 	'''align the flatten images'''
 	#grab the paths to the sky subtracted and flattened images
-	images_to_align =sorted(glob.glob("reduced/*"+color+"*.fits"))
+
+	#images_to_align =sorted(glob.glob("reduced/*"+color+"*.fits"))
+
 	#pick the first image in this view as the reference image
 	if color=='J':
 		ref_image='reduced/140120.J.4U1543.s-f-a-c.fits'
@@ -116,9 +118,9 @@ def alignReduced(color):
 				shape=outputshape, makepng=False, outdir="./reduced/"+color+"align/")
 	return
 
-def photometry(color):
+def photometry(color, images):
 	#grab the aligned images
-	images=sorted(glob.glob('reduced/'+color+'align/*fits'))
+	#images=sorted(glob.glob('reduced/'+color+'align/*fits'))
 
 	for i in images:
 		iraf.phot(i, coords='reduced/'+color+'align/coords.lis',
@@ -131,8 +133,8 @@ def photometry(color):
 
 #function reads open photometry files and looks up the quantities we're interested in, like magnitude, error, jd, airmass
 #then takes this data and puts it in a pandas data frame
-def magtodf(pathToMagFiles):
-    magfiles=glob.glob(pathToMagFiles)
+def magtodf(color):
+    magfiles=glob.glob('reduced/'+color.upper()+'align/*'+color.upper()+'*.MC')
     
     #the keys for this dictionary will be the columns for the data frame.
     #each key starts off with an empy python list as its value.
@@ -174,5 +176,18 @@ def magtodf(pathToMagFiles):
     df=pd.DataFrame(rowdict)
     #change the data type of the date column to int. cant translate from string to int above for some reason
     df['date']=df['date'].astype(int)
-    return df
+
+    if color.upper()=='J':
+    	Jphot=df
+    	Jphot['Cal']=Jphot.mag1 - ((Jphot.mag2 + Jphot.mag3 + Jphot.mag4 + Jphot.mag5 + Jphot.mag6+ Jphot.mag7)/6.0) + 15.154
+    	Jphot.to_pickle('Jphot.pkl')
+    	return Jphot
+    elif color.upper()=='H':
+    	Hphot=df
+    	Hphot['Cal']=Hphot.mag1 - ((Hphot.mag2 + Hphot.mag3 + Hphot.mag4 + Hphot.mag5 + Hphot.mag6+ Hphot.mag7)/6.0) + 14.559
+    	Hphot.to_pickle('Hphot.pkl')
+    	return Hphot
+    else:
+    	print 'I can only calibrate J or H data. Here is your raw data'
+    	return df
 
