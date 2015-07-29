@@ -207,5 +207,5 @@ def cleanup(path):
 	scratchFiles=glob.glob(path+'*')
 	for f in scratchFiles:
 		os.remove(f)
-	os.remove('/home/ih64/Desktop/4U1543/logfile')
+	#os.remove('/home/ih64/Desktop/4U1543/logfile')
 	return

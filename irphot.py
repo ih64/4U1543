@@ -3,6 +3,7 @@ import numpy as np
 from pyraf import iraf
 from astropy.io import ascii
 import pandas as pd
+import matplotlib.pyplot as plt
 #append the python path so it can use alipy and stuff
 sys.path.append('/home/ih64/python_modules/')
 import alipy
@@ -191,3 +192,22 @@ def magtodf(color):
     	print 'I can only calibrate J or H data. Here is your raw data'
     	return df
 
+def lightCurve():
+	Jphot=pd.read_pickle('Jphot.pkl')
+	Hphot=pd.read_pickle('Hphot.pkl')
+
+	fig=plt.figure()
+
+	ax1=fig.add_subplot(211)
+	ax1.errorbar(Jphot.juliandate.astype(float)-2450000, Jphot.Cal, yerr=Jphot.merr1, fmt='bo', label="J")
+	ax1.invert_yaxis()
+	plt.legend()
+
+	ax2=fig.add_subplot(212)
+	ax2.errorbar(Hphot.juliandate.astype(float)-2450000, Hphot.Cal, yerr=Hphot.merr1, fmt='ro', label='H')
+	ax2.invert_yaxis()
+	plt.legend()
+	
+	plt.show()
+
+	return
