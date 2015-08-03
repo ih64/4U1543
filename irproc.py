@@ -35,14 +35,24 @@ def sameDate(df,color):
 	Hfiles=pd.read_pickle('HrawList.pkl')
 	sameDate(Hfiles[H.Date > 150715],'H')
 	'''
+	#measure the number of rows in the dataframe
 	size=len(df)
+	#initialize two pointers, i and j, which will walk along the dataframe
+	#j is ahead of i. we will use them to find files observed on the same night
+	#recall that the dataframe is sorted according to observation date
 	i=0
 	j=i+1
+	#while the j pointer is still running through the dataframe ...
 	while j < size:
+		#look at the date at the position of i and j
 		dateI=df.Date.iloc[i]
 		dateJ=df.Date.iloc[j]
+		#if the dates are equal, move j forward one step
 		if dateI==dateJ:
 			j+=1
+		#otherwise, return the section of the dataframe between the
+		#i and j pointesr. this part of the dataframe has images taken from the same night
+		#we can pass them on to other functions to do sky subtraction, flattening, aligning, and combining
 		else:
 			dfView = df.iloc[i:j]
 			makeSkyFlat(dfView)
@@ -58,10 +68,14 @@ def sameDate(df,color):
 			else:
 				print "we could not successfully align 2 or more dither positions"
 				print "there will not combined image for this dither set"
+			#remove the intermediary files that were saved in scratch/
 			cleanup('scratch/')
+			#move i up to j's current position
 			i=j
+			#move j up one
 			j+=1
-
+	#we have fallen out of the loop. This means that the entries between the i and the end of the df
+	#all belong to the most recent observation date. lets reduce those too.
 	dfView = df.iloc[i:j]
 	makeSkyFlat(dfView)
 	skySub(dfView)
@@ -73,6 +87,7 @@ def sameDate(df,color):
 	else:
 		print "we could not successfully align 2 or more dither positions"
 		print "there will not combined image for this dither set"
+	#remove the intermediary files that were saved in scratch/
 	cleanup('scratch/')
 	return
 
