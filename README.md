@@ -33,7 +33,9 @@ This module contains several functions that sky subtract, flatten, align, and co
 
 First, ensure that you have followed the instructions above in fileListing.py to create data structures for the J and H flats and images. We will rely on them in this section.
 
-Once that is sorted out, start up python and read in the H or J filelisting, and pass it to the sameDate function. 
+Once that is sorted out, start up python and read in the H or J filelisting, and pass it to the sameDate function. The sameDate function accepts two arguments, the first is a pandas dataframe read in from either HrawList.pkl or JrawList.pkl. The second is the filter you are working on, either 'J' or 'H'. The second argument is used to ensure we look up appropriate irflats. 
+
+I'll show you a few examples with some typical command sequences to use after starting up python. 
 
 For example, to run all the raw J data trhough and process, align, and combine all dither positions taken on the same night
 ```python
@@ -52,6 +54,14 @@ Hfiles=pd.read_pickle('HrawList.pkl')
 irproc.sameDate(Hfiles[H.Date > 150715],'H')
 ```
 
+Or maybe you want to work on J data taken on a very specific date (150715 in the example below)
+```python
+import irproc
+import pandas as pd
+Jfiles=pd.read_pickle('JrawList.pkl')
+irproc.sameDate(Jfiles[J.Date == 150715],'J')
+```
+
 You will see a lot of output in your terminal. For every set of dither images, the following happens
 1. the sky background is calculated by median combining the dither positions
 2. the sky is then subtracted from each dither position
@@ -59,7 +69,9 @@ You will see a lot of output in your terminal. For every set of dither images, t
 4. the different dither positions are flattened with the flat found in step 3
 5. we attempt to align the different dither positions together
 6. dither positions which were successfully aligned are then combined and saved under reduced/. if fewer than 2 dithers were successfuly alligned, we do not attempt to combine the images.
-7. the intermediary files which were generated in the process are removed
+7. the intermediary files which were generated and temporarily saved in the scratch/ directory in the process are removed
+
+If you want to understand in greater detail how this function works, I'd encourage you to open up irproc.py in a text editor and examine the code. I've taken great care to leave docstrings for each function, and comments describing what each function is doing.
 
 ## irphot.py
 
