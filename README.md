@@ -5,17 +5,18 @@ These programs are hardcoded to work with the directory structure I set up when 
 
 I'll describe the directory structure I had explicitly, so you can either mimic it or make appropriate corrections to the code if you want to clone this directory to your machine.
 
-Everything is under /scratch/xrb-photometry/4U1543 on thuban
-fileListing.py
-irphot.py
-irproc.py
-+Hraw/
-+Jraw/
-+irflats/
-+reduced/
------+Halign/
------+Jalign/
-+scratch/
+Everything is under on thuban
+/scratch/xrb-photometry/4U1543
+|-- fileListing.py  
+|-- irphot.py  
+|-- irproc.py  
+|-- Hraw/  
+|-- Jraw/  
+|-- irflats/  
+|-- reduced/  
+|   |--Halign/  
+|   |--Jalign/  
+|-- scratch/  
 
 copy all the unprocessed binirYYMMDD.xxxx.fits data into either the Hraw or Jraw directory, depending on the filter.
 
