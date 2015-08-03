@@ -14,8 +14,8 @@ Everything is under on thuban
 |-- Jraw/  
 |-- irflats/  
 |-- reduced/  
-|   |--Halign/  
-|   |--Jalign/  
+|⋅⋅⋅|--Halign/  
+|⋅⋅⋅|--Jalign/  
 |-- scratch/  
 
 copy all the unprocessed binirYYMMDD.xxxx.fits data into either the Hraw or Jraw directory, depending on the filter.
