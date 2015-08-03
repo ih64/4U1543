@@ -3,7 +3,25 @@ IR data for 4U1543
 
 These programs are hardcoded to work with the directory structure I set up when I was working on 4U1543. However, it is a starting point to making a pipeline to deal with IR data. 
 
-There are three different python programs in this repository: fileLisitng.py, irproc.py, and irphot.py. Each deals with a different part of the IR reduction.
+I'll describe the directory structure I had explicitly, so you can either mimic it or make appropriate corrections to the code if you want to clone this directory to your machine.
+
+Everything is under /scratch/xrb-photometry/4U1543 on thuban
+fileListing.py
+irphot.py
+irproc.py
++Hraw/
++Jraw/
++irflats/
++reduced/
+-----+Halign/
+-----+Jalign/
++scratch/
+
+copy all the unprocessed binirYYMMDD.xxxx.fits data into either the Hraw or Jraw directory, depending on the filter.
+
+If you set all that up in your end, you should be good to go.
+
+There are three different python programs in this repository: fileLisitng.py, irproc.py, and irphot.py. Each deals with a different part of the IR reduction. I'll discuss each by itself below
 
 ## fileLisitng.py
 
