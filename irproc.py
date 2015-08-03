@@ -25,8 +25,15 @@ def sameDate(df,color):
 			skySub(dfView)
 			flatFile=nearestFlat(dfView,color)
 			flatten(flatFile)
-			align()
-			combineDithers(color)
+			#the exitFlag will equal True if align() was able to align 2 or more dithers
+			#if the exitFlag is true, then combine the aligned dither positions
+			exitFlag=align()
+			if exitFlag:
+				combineDithers(color)
+			#otherwise, just pass over these dither positions
+			else:
+				print "we could not successfully align 2 or more dither positions"
+				print "there will not combined image for this dither set"
 			cleanup('scratch/')
 			i=j
 			j+=1
@@ -36,8 +43,12 @@ def sameDate(df,color):
 	skySub(dfView)
 	flatFile=nearestFlat(dfView,color)
 	flatten(flatFile)
-	align()
-	combineDithers(color)
+	exitFlag=align()
+	if exitFlag:
+		combineDithers(color)
+	else:
+		print "we could not successfully align 2 or more dither positions"
+		print "there will not combined image for this dither set"
 	cleanup('scratch/')
 	return
 
@@ -174,12 +185,23 @@ def align():
 	outputshape = alipy.align.shape(ref_image)
 	# This is simply a tuple (width, height)... you could specify any other shape.
 
+	#initialize numGoodAlign, it will keep tally of the dither positions we were able to align
+	numGoodAlign=0
+
 	for id in identifications:
 		if id.ok == True:
 			# Variant 2, using geomap/gregister, correcting also for distortions :
 			alipy.align.irafalign(id.ukn.filepath, id.uknmatchstars, id.refmatchstars,verbose=False,
 				shape=outputshape, makepng=False, outdir="./scratch")
-	return
+
+			#if we were able to align this dither frame, incrament numGoodAlign by one
+			numGoodAlign+=1
+
+	#if we could align at least two frames successfully, then return True
+	if numGoodAlign >= 2:
+		return True
+	else:
+		return False
 
 def combineDithers(color):
 	'''grab the aligned images and sum them up into one'''
