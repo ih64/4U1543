@@ -23,7 +23,29 @@ python fileListing.py 'J' 'flat' #creates JflatList.pkl
 python fileListing.py 'H' 'flat' #creates HflatList.pkl
 ```
 
-Below you will see a screenshot for a typical command sequence to read in these files once you have created them. The screenshot also useses the .head(5) method on the dataframes to show the first 5 lines in the dataframes, to give you a sense of the information they contain. For every file, hey list the observation dates in YYMMDD, the observation date in Julian Date, and the path to the files. This will help us efficently and neatly reference images we are interested in later on in the reduciton.
+Below you will see a screenshot for a typical command sequence to read in these files once you have created them. The screenshot also useses the .head(5) method on the dataframes to show the first 5 lines in the dataframes, to give you a sense of the information they contain. For every file, they list the observation dates in YYMMDD, the observation date in Julian Date, and the path to the files. This will help us efficently and neatly reference images we are interested in later on in the reduciton.
 
 ![first 5 lines of HrawList.pkl and JflatList.pkl](https://github.com/ih64/4U1543/blob/master/tutorial_images/flatpkl_and_filespkl.png)
 
+## irproc.py
+
+This module contains several functions that sky subtract, flatten, align, and combine dither positions. It also contains a master function, sameDate, that identifies dither positions takne on the same night, and passes those files off to the other functions for sky subtraction etc and ultimately produces a combined image, and saves it to disk in the reduced/ directory. Let's see how to use it here.
+
+First, ensure that you have followed the instructions above in fileListing.py to create data structures for the J and H flats and images. We will rely on them in this section.
+
+Once that is sorted out, start up python and read in the H or J filelisting into a variable. Then use it with the sameDate function.
+
+For example, run all the raw J data trhough and process, align, and combine all dither positions taken on the same night
+```python
+import pandas as pd
+Jfiles=pd.read_pickle('JrawList.pkl')
+sameDate(Jfiles,'J')
+```
+
+Or if you only want to run all the H data taken later than 150715 through and process, align, and combine all dither positions taken on the same night
+
+```python
+import pandas as pd
+Hfiles=pd.read_pickle('HrawList.pkl')
+sameDate(Hfiles[H.Date > 150715],'H')
+```
