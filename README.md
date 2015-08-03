@@ -63,6 +63,7 @@ irproc.sameDate(Jfiles[J.Date == 150715],'J')
 ```
 
 You will see a lot of output in your terminal. For every set of dither images, the following happens
+
 1. the sky background is calculated by median combining the dither positions
 2. the sky is then subtracted from each dither position
 3. the flat which was taken closest in time to this observation is found in the the flatList
