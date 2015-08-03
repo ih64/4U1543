@@ -11,6 +11,30 @@ iraf.imred()
 iraf.ccdred()
 
 def sameDate(df,color):
+	'''
+	Find the dithers taken on the same night in a filter, sky subtract, flatten, align, combine them
+	This function calls all the other functions written below.
+	This relies on the files JrawList.pkl, HrawList.pkl, JflatList.pkl, and HflatList.pkl being up to date. For information on how to create
+	these files and what they are, look at the documentation in fileListing.py
+	INPUT:
+	df: a pandas dataframe. read in either JrawList.pkl or HrawList.pkl  to a dataframe 
+		to pass to this function, depending which filter you want to redcue
+	color: "J", or "H". The filter which data you want to reduce
+	OUTPUT:
+	for every date being processed, a fits file in the reduced/ subdirectory with the format
+	YYMMDD.J.4U1543.s-f-a-c.fits or YYMMDD.J.4U1543.s-f-a-c.fits is written, depending on the value of 'color'
+
+	EXAMPLE:
+	#run all the raw J data trhough and process, align, and combine all dither positions taken on the same night
+	import pandas as pd
+	Jfiles=pd.read_pickle('JrawList.pkl')
+	sameDate(Jfiles,'J')
+	=================================
+	#run all the H data taken later than 150715 through and process, align, and combine all dither positions taken on the same night
+	import pandas as pd
+	Hfiles=pd.read_pickle('HrawList.pkl')
+	sameDate(Hfiles[H.Date > 150715],'H')
+	'''
 	size=len(df)
 	i=0
 	j=i+1
