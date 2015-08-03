@@ -33,19 +33,34 @@ This module contains several functions that sky subtract, flatten, align, and co
 
 First, ensure that you have followed the instructions above in fileListing.py to create data structures for the J and H flats and images. We will rely on them in this section.
 
-Once that is sorted out, start up python and read in the H or J filelisting into a variable. Then use it with the sameDate function.
+Once that is sorted out, start up python and read in the H or J filelisting, and pass it to the sameDate function. 
 
-For example, run all the raw J data trhough and process, align, and combine all dither positions taken on the same night
+For example, to run all the raw J data trhough and process, align, and combine all dither positions taken on the same night
 ```python
+import irproc
 import pandas as pd
 Jfiles=pd.read_pickle('JrawList.pkl')
-sameDate(Jfiles,'J')
+irproc.sameDate(Jfiles,'J')
 ```
 
-Or if you only want to run all the H data taken later than 150715 through and process, align, and combine all dither positions taken on the same night
+Or if you only want to run all the H data taken *later than 150715* through and process, align, and combine all dither positions taken on the same night
 
 ```python
+import irproc
 import pandas as pd
 Hfiles=pd.read_pickle('HrawList.pkl')
-sameDate(Hfiles[H.Date > 150715],'H')
+irproc.sameDate(Hfiles[H.Date > 150715],'H')
 ```
+
+You will see a lot of output in your terminal. For every set of dither images, the following happens
+1. the sky background is calculated by median combining the dither positions
+2. the sky is then subtracted from each dither position
+3. the flat which was taken closest in time to this observation is found in the the flatList
+4. the different dither positions are flattened with the flat found in step 3
+5. we attempt to align the different dither positions together
+6. dither positions which were successfully aligned are then combined and saved under reduced/. if fewer than 2 dithers were successfuly alligned, we do not attempt to combine the images.
+7. the intermediary files which were generated in the process are removed
+
+## irphot.py
+
+This module contains functions to do apertury photometry on the images created by irproc.py. It is not streamlined yet-there is no master function that calls the others, and using it is a little clunky at the moment. 
