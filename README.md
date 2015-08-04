@@ -70,7 +70,7 @@ Or if you only want to run all the H data taken *later than 150715* through and 
 import irproc
 import pandas as pd
 Hfiles=pd.read_pickle('HrawList.pkl')
-irproc.sameDate(Hfiles[H.Date > 150715],'H')
+irproc.sameDate(Hfiles[Hfiles.Date > 150715],'H')
 ```
 
 Or maybe you want to work on J data taken on a very specific date (150715 in the example below)
@@ -78,7 +78,7 @@ Or maybe you want to work on J data taken on a very specific date (150715 in the
 import irproc
 import pandas as pd
 Jfiles=pd.read_pickle('JrawList.pkl')
-irproc.sameDate(Jfiles[J.Date == 150715],'J')
+irproc.sameDate(Jfiles[Jfiles.Date == 150715],'J')
 ```
 
 You will see a lot of output in your terminal. For every set of dither images, the following happens
