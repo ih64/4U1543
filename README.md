@@ -46,6 +46,8 @@ Below you will see a screenshot for a typical command sequence to read in these 
 
 ![first 5 lines of HrawList.pkl and JflatList.pkl](https://github.com/ih64/4U1543/blob/master/tutorial_images/flatpkl_and_filespkl.png)
 
+note that this will take a while to run. this is because the entire *List.pkl files are recreated rather than updated. this is an odvious area for improvement.
+
 ## irproc.py
 
 This module contains several functions that sky subtract, flatten, align, and combine dither positions. It also contains a master function, sameDate, that identifies dither positions takne on the same night, and passes those files off to the other functions for sky subtraction etc and ultimately produces a combined image, and saves it to disk in the reduced/ directory. Let's see how to use it here.
@@ -96,3 +98,58 @@ If you want to understand in greater detail how this function works, I'd encoura
 ## irphot.py
 
 This module contains functions to do apertury photometry on the images created by irproc.py. It is not streamlined yet-there is no master function that calls the others, and using it is a little clunky at the moment. 
+
+### irphot.alignReuced
+
+The first step is to align the new reduced & combined ir images to a common coordinate system. In the directories reduced/Jalign and reduced/Halign the aligned versions of the images under reduced are saved. To align an image, we use the alignReduced method.
+
+For example, in the last code block in the section above we did ir reduction for J data taken on 150715. That created the file reduced/150715.J.4U1543.s-f-a-c.fits. To align this image we would do start up python and do
+```python
+import irphot
+irphot.alignReduced('J',['reduced/150715.J.4U1543.s-f-a-c.fits'])
+```
+
+The first argument is the filter the data was taken in. The second argument is a python list containing the paths to the images you want to align. The output will be a new file with the extension '_gregister.fits' for every file in the second argument. For example, the above commands will create the file reduced/Jalign/150715.J.4U1543.s-f-a-c_gregister.fits.
+
+It is also possible to align a bunch of images at once. Just add them to the list in the second argument. For example, 
+```python
+irphot.alignReduced('H',['reduced/150715.H.J.4U1543.s-f-a-c.fits','reduced/150717.H.4U1543.s-f-a-c.fits'])
+```
+aligns h data taken on 150715 *and* 150717.
+
+### irphot.photometry
+
+now we can do aperture photometry on the images we created in the previous section. the command sequence is almost identical as the one we used for irphto.alignReduced. We will pass the filter and a list containing the centered images to the photometry method
+
+```python
+import irphot
+irphot.photometry('J',['reduced/Jalign/150715.J.4U1543.s-f-a-c_gregister.fits'])
+```
+
+will do photometry on reduced/Jalign/150715.J.4U1543.s-f-a-c_gregister.fits and create the mag file reduced/Jalign/150715.J.4U1543.s-f-a-c_gregister.fits.MC which contains the output from photometry.
+
+```python
+irphot.photometry('H',['reduced/Halign/150715.H.J.4U1543.s-f-a-c_gregister.fits','reduced/Halign/150717.H.4U1543.s-f-a-c_gregister.fits'])
+```
+
+will do photometry on the two H images.
+
+### irphot.magtodf
+
+now that we have many output files from photometry, we can gather them all up in a pandas dataframe. The method magtodf will do all the heavy lifting for us, we just need to tell it what filter we care about.
+
+```python
+irphot.magtodf('J') #get all the Jband photometry data
+irphot.magtodf('H') #get all the Hband photometry data
+```
+
+this will create Jphot.pkl and Hphot.pkl, pickeled versions of the dataframes created by the magtodf. see the screenshot below to look at a command sequence to read in the dataframe and see some of the contents. information like observation date, instrumental magnitudes, errors, and the Calibrated magnitude are given. The Calibrated Magnitude bit is hardcoded for 4U1543's comparison stars and their 2MASS magnitudes
+
+![photometry dataframe](https://github.com/ih64/4U1543/blob/master/tutorial_images/photdf.png)
+
+Note that this will take a while to run. This is because the program *recreates the entire dataframe* by looking at each photometry output file rather than simply updating it. As an improvement, you can change this up.
+
+### irphot.lightCurve
+
+for kicks, I threw in a method that will create a light curve of the H and J data. just do `irphot.lightCurve()` and you will get a two panel light curve with the data. the scale may be funny if there are outliers in the data, but it is easy to change the display with the matplotlib GUI.
+
