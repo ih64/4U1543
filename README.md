@@ -153,3 +153,4 @@ Note that this will take a while to run. This is because the program *recreates 
 
 for kicks, I threw in a method that will create a light curve of the H and J data. just do `irphot.lightCurve()` and you will get a two panel light curve with the data. the scale may be funny if there are outliers in the data, but it is easy to change the display with the matplotlib GUI.
 
+![lightcuve, after the y ranges were changed](https://github.com/ih64/4U1543/blob/master/tutorial_images/lightcurve.png)
