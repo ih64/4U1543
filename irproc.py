@@ -172,7 +172,7 @@ def nearestFlat(dfView,color):
 	flatDF=pd.read_pickle(color.upper()+'flatList.pkl')
 	#subtract the median time form all the flat times, take absolute value, 
 	#find index of min, use this index to grab the file name with this observation date
-	return flatDF.file[np.argmin(np.abs(flatDF.JulianDate.values - medTime))]
+	return flatDF.file[np.argmin(np.abs(flatDF.JulianDate.values.astype(float) - medTime))]
 
 def flatten(flatFile):
 	'''grab any sky-subtracted images, and flatten them using flatFile'''
